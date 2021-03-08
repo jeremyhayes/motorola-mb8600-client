@@ -28,13 +28,6 @@ export class HnapClient {
         this._cookie = cookie;
         this._privateKey = privateKey;
 
-        const url = 'https://192.168.100.1/HNAP1/';
-        const auth = this._generateAuth('Login');
-        const headers = {
-            HNAP_AUTH: auth,
-            SOAPAction: 'http://purenetworks.com/HNAP1/Login',
-            Cookie: `uid=${cookie}; PrivateKey=${this._privateKey}`
-        };
         const payload = {
             Login: {
                 Action: 'login',
@@ -44,66 +37,36 @@ export class HnapClient {
                 PrivateLogin: 'LoginPassword',
             }
         };
-        const response = await fetch(
-            url,
-            {
-                headers,
-                method: 'POST',
-                body: JSON.stringify(payload),
-                agent: _url => _url.protocol === 'https:' ? httpsAgent : httpAgent
-            }
-        );
+        const response = await this._performRequest('Login', payload);
+        // console.log({ method: 'login', response });
 
-        const responseBody = await response.json();
-        // console.log({ method: 'login', response, responseBody });
-
-        if (responseBody.LoginResponse.LoginResult !== 'OK') {
-            console.error(responseBody);
+        if (response.LoginResponse.LoginResult !== 'OK') {
+            console.error(response);
             throw new Error('Unexpected response.');
         }
 
-        return responseBody;
+        return response;
     }
 
     async getStatus() {
-        const url = 'https://192.168.100.1/HNAP1/';
-        const auth = this._generateAuth('GetMultipleHNAPs');
-        const headers = {
-            HNAP_AUTH: auth,
-            SOAPAction: '"http://purenetworks.com/HNAP1/GetMultipleHNAPs"',
-            Cookie: `uid=${this._cookie}; PrivateKey=${this._privateKey}`
-        };
         const payload = {
             GetMultipleHNAPs: {
                 GetMotoStatusSoftware: '',
                 GetMotoStatusXXX: ''
             }
         };
-        const response = await fetch(
-            url,
-            {
-                headers,
-                method: 'POST',
-                body: JSON.stringify(payload),
-                agent: _url => _url.protocol === 'https:' ? httpsAgent : httpAgent
-            });
+        const response = await this._performRequest('GetMultipleHNAPs', payload);
+        // console.log({ method: 'getStatus', response });
 
-        const responseBody = await response.json();
-        // console.log({method: 'getStatus', response: responseBody})
-
-        if (responseBody.GetMultipleHNAPsResponse.GetMultipleHNAPsResult !== 'OK') {
-            console.error(responseBody);
+        if (response.GetMultipleHNAPsResponse.GetMultipleHNAPsResult !== 'OK') {
+            console.error(response);
             throw new Error('Unexpected response.');
         }
 
-        return responseBody;
+        return response;
     }
 
     async _getLoginParams(username) {
-        const url = 'https://192.168.100.1/HNAP1/';
-        const headers = {
-            SOAPAction: 'http://purenetworks.com/HNAP1/Login'
-        };
         const payload = {
             Login: {
                 Action: 'request',
@@ -113,28 +76,52 @@ export class HnapClient {
                 PrivateLogin: 'LoginPassword'
             }
         };
-        const response = await fetch(
-            url,
-            {
-                headers,
-                body: JSON.stringify(payload),
-                method: 'POST',
-                agent: _url => _url.protocol === 'https:' ? httpsAgent : httpAgent,
-            });
 
-        const responseBody = await response.json();
-        // console.log({ method: '_getLoginParams', response: responseBody });
+        const response = await this._performRequest('Login', payload);
+        // console.log({ method: '_getLoginParams', response });
 
-        if (responseBody.LoginResponse.LoginResult !== 'OK') {
-            console.error(responseBody);
+        if (response.LoginResponse.LoginResult !== 'OK') {
+            console.error(response);
             throw new Error('Unexpected response.');
         }
 
         return {
-            cookie: this._encodeUtf8(responseBody.LoginResponse.Cookie),
-            publicKey: this._encodeUtf8(responseBody.LoginResponse.PublicKey),
-            challenge: this._encodeUtf8(responseBody.LoginResponse.Challenge),
+            cookie: this._encodeUtf8(response.LoginResponse.Cookie),
+            publicKey: this._encodeUtf8(response.LoginResponse.PublicKey),
+            challenge: this._encodeUtf8(response.LoginResponse.Challenge),
         };
+    }
+
+    async _performRequest(operation, payload, skipAuth = false) {
+        const url = 'https://192.168.100.1/HNAP1/';
+        const headers = {
+            SOAPAction: `"http://purenetworks.com/HNAP1/${operation}"`,
+        };
+
+        if (!skipAuth) {
+            const auth = this._generateAuth(operation);
+            headers.HNAP_AUTH = auth;
+            headers.Cookie = `uid=${this._cookie}; PrivateKey=${this._privateKey}`
+        }
+
+        const response = await fetch(
+            url,
+            {
+                headers,
+                method: 'POST',
+                body: JSON.stringify(payload),
+                agent: _url => _url.protocol === 'https:' ? httpsAgent : httpAgent
+            });
+
+        if (response.status !== 200) {
+            console.error(response);
+            throw new Error('Unexpected response.');
+        }
+
+        const responseBody = await response.json();
+        // console.log({method: '_performRequest', responseBody});
+
+        return responseBody;
     }
 
     _generateAuth(operation) {
