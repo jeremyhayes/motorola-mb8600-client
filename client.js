@@ -3,18 +3,28 @@ import http from 'http';
 import https from 'https';
 import crypto from 'crypto';
 
-const httpAgent = new http.Agent({
-    rejectUnauthorized: false
-})
-const httpsAgent = new https.Agent({
-    rejectUnauthorized: false
-});
-
 export class HnapClient {
+
+    // initialized via constructor
+    _baseUrl = '';
+    _ignoreSsl = false;
+
+    // initialized via login(...)
     _cookie = '';
     _privateKey = '';
 
-    async login(username, password) {
+    constructor(
+        baseUrl = 'http://192.168.100.1',
+        ignoreSsl = false
+    ) {
+        this._baseUrl = baseUrl;
+        this._ignoreSsl = ignoreSsl;
+    }
+
+    async login(
+        username = 'admin',
+        password = 'motorola'
+    ) {
         const {
             cookie,
             publicKey,
@@ -93,7 +103,7 @@ export class HnapClient {
     }
 
     async _performRequest(operation, payload, skipAuth = false) {
-        const url = 'https://192.168.100.1/HNAP1/';
+        const url = `${this._baseUrl}/HNAP1/`;
         const headers = {
             SOAPAction: `"http://purenetworks.com/HNAP1/${operation}"`,
         };
@@ -110,7 +120,14 @@ export class HnapClient {
                 headers,
                 method: 'POST',
                 body: JSON.stringify(payload),
-                agent: _url => _url.protocol === 'https:' ? httpsAgent : httpAgent
+                agent: parsedUrl => {
+                    if (this._ignoreSsl) {
+                        return parsedUrl.protocol === 'https:'
+                            ? new https.Agent({ rejectUnauthorized: false })
+                            : new http.Agent({ rejectUnauthorized: false })
+                    }
+                    return null;
+                }
             });
 
         if (response.status !== 200) {
