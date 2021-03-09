@@ -17,3 +17,7 @@ console.log(software);
 // get modem connection status
 const connection = await client.getConnection();
 console.log(connection);
+
+// get modem event log
+const eventLog = await client.getEventLog();
+console.log(eventLog);

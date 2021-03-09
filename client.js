@@ -94,6 +94,24 @@ export class HnapClient {
         return response;
     }
 
+    async getEventLog() {
+        const payload = {
+            "GetMultipleHNAPs": {
+                "GetMotoStatusLog": "",
+                "GetMotoStatusLogXXX": ""
+            }
+        };
+        const response = await this._performRequest('GetMultipleHNAPs', payload);
+        // console.log({ method: 'getEventLog', response });
+
+        if (response.GetMultipleHNAPsResponse.GetMultipleHNAPsResult !== 'OK') {
+            console.error(response);
+            throw new Error('Unexpected response.');
+        }
+
+        return response;
+    }
+
     async _getLoginParams(username) {
         const payload = {
             Login: {
