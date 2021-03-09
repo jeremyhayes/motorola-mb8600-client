@@ -161,6 +161,26 @@ export class HnapClient {
         return response;
     }
 
+    async getEventLogData() {
+        const eventLogResponse = await this.getEventLog();
+
+        const eventLog = eventLogResponse
+            .GetMultipleHNAPsResponse
+            .GetMotoStatusLogResponse
+            .MotoStatusLogList
+            .split('}-{')
+            .map(x => {
+                const record = x.split('^');
+                return {
+                    time: `${record[0]} ${record[1]}`,
+                    priority: record[2],
+                    description: record[3]
+                };
+            });
+
+        return eventLog;
+    }
+
     async _getLoginParams(username) {
         const payload = {
             Login: {

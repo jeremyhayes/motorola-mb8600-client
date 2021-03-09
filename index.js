@@ -25,3 +25,7 @@ console.log(connectionData);
 // get modem event log
 const eventLog = await client.getEventLog();
 console.log(eventLog);
+
+// get modem event log data
+const eventLogData = await client.getEventLogData();
+console.log(eventLogData);
