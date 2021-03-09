@@ -10,6 +10,10 @@ const username = 'admin';
 const password = 'motorola';
 await client.login(username, password);
 
-// get modem status
-const status = await client.getStatus();
-console.log(status);
+// get modem software status
+const software = await client.getSoftware();
+console.log(software);
+
+// get modem connection status
+const connection = await client.getConnection();
+console.log(connection);

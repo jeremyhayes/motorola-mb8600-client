@@ -58,7 +58,7 @@ export class HnapClient {
         return response;
     }
 
-    async getStatus() {
+    async getSoftware() {
         const payload = {
             GetMultipleHNAPs: {
                 GetMotoStatusSoftware: '',
@@ -66,7 +66,25 @@ export class HnapClient {
             }
         };
         const response = await this._performRequest('GetMultipleHNAPs', payload);
-        // console.log({ method: 'getStatus', response });
+        // console.log({ method: 'getSoftware', response });
+
+        if (response.GetMultipleHNAPsResponse.GetMultipleHNAPsResult !== 'OK') {
+            console.error(response);
+            throw new Error('Unexpected response.');
+        }
+
+        return response;
+    }
+
+    async getConnection() {
+        const payload = {
+            GetMultipleHNAPs: {
+                GetMotoStatusDownstreamChannelInfo: '',
+                GetMotoStatusUpstreamChannelInfo: ''
+            }
+        };
+        const response = await this._performRequest('GetMultipleHNAPs', payload);
+        // console.log({ method: 'getConnection', response });
 
         if (response.GetMultipleHNAPsResponse.GetMultipleHNAPsResult !== 'OK') {
             console.error(response);
