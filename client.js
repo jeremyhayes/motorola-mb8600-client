@@ -106,15 +106,15 @@ export class HnapClient {
                 const record = x.split('^');
                 // 1^Locked^QAM256^38^393.0^ 0.9^39.2^602^165^|+|
                 return {
-                    channel: record[0],
+                    channel: +record[0],
                     lockStatus: record[1],
                     modulation: record[2],
-                    channelId: record[3],
-                    frequency: record[4],
-                    power: record[5],
-                    snr: record[6],
-                    corrected: record[7],
-                    uncorrected: record[8]
+                    channelId: +record[3],
+                    frequency: +record[4],
+                    power: +record[5],
+                    snr: +record[6],
+                    corrected: +record[7],
+                    uncorrected: +record[8]
                 };
             });
 
@@ -127,13 +127,13 @@ export class HnapClient {
                 const record = x.split('^');
                 // 1^Locked^SC-QAM^5^5120^35.6^44.3^|+|
                 return {
-                    channel: record[0],
+                    channel: +record[0],
                     lockStatus: record[1],
                     channelType: record[2],
-                    channelId: record[3],
-                    symbolRate: record[4],
-                    frequency: record[5],
-                    power: record[6]
+                    channelId: +record[3],
+                    symbolRate: +record[4],
+                    frequency: +record[5],
+                    power: +record[6]
                 };
             });
 
