@@ -47,58 +47,42 @@ export class HnapClient {
                 PrivateLogin: 'LoginPassword',
             }
         };
-        const response = await this._performRequest('Login', payload);
-        // console.log({ method: 'login', response });
-
-        if (response.LoginResponse.LoginResult !== 'OK') {
-            console.error(response);
-            throw new Error('Unexpected response.');
-        }
+        const operation = Object.keys(payload)[0];
+        const response = await this._performRequest(operation, payload);
+        // console.log({ operation, response });
+        this._ensureSuccessResult(response, operation);
 
         return response;
     }
 
     async getSoftware() {
-        const payload = {
-            GetMultipleHNAPs: {
-                GetMotoStatusSoftware: '',
-                GetMotoStatusXXX: ''
-            }
-        };
-        const response = await this._performRequest('GetMultipleHNAPs', payload);
-        // console.log({ method: 'getSoftware', response });
-
-        if (response.GetMultipleHNAPsResponse.GetMultipleHNAPsResult !== 'OK') {
-            console.error(response);
-            throw new Error('Unexpected response.');
-        }
-
-        return response;
+        return await this._performSingleHnapRequest('GetMotoStatusSoftware');
     }
 
-    async getConnection() {
-        const payload = {
-            GetMultipleHNAPs: {
-                GetMotoStatusDownstreamChannelInfo: '',
-                GetMotoStatusUpstreamChannelInfo: ''
-            }
-        };
-        const response = await this._performRequest('GetMultipleHNAPs', payload);
-        // console.log({ method: 'getConnection', response });
-
-        if (response.GetMultipleHNAPsResponse.GetMultipleHNAPsResult !== 'OK') {
-            console.error(response);
-            throw new Error('Unexpected response.');
-        }
-
-        return response;
+    async getStartupSequence() {
+        return await this._performSingleHnapRequest('GetMotoStatusStartupSequence');
     }
 
-    async getConnectionData() {
-        const connectionResponse = await this.getConnection();
+    async getConnectionInfo() {
+        return await this._performSingleHnapRequest('GetMotoStatusConnectionInfo');
+    }
 
-        const downstream = connectionResponse
-            .GetMultipleHNAPsResponse
+    async getDownstreamChannelInfo() {
+        return await this._performSingleHnapRequest('GetMotoStatusDownstreamChannelInfo');
+    }
+
+    async getUpstreamChannelInfo() {
+        return await this._performSingleHnapRequest('GetMotoStatusUpstreamChannelInfo');
+    }
+
+    async getLog() {
+        return await this._performSingleHnapRequest('GetMotoStatusLog');
+    }
+
+    async getDownstreamChannelInfoParsed() {
+        const downstreamResponse = await this.getDownstreamChannelInfo();
+
+        return downstreamResponse
             .GetMotoStatusDownstreamChannelInfoResponse
             .MotoConnDownstreamChannel
             .split('|+|')
@@ -117,9 +101,12 @@ export class HnapClient {
                     uncorrected: +record[8]
                 };
             });
+    }
 
-        const upstream = connectionResponse
-            .GetMultipleHNAPsResponse
+    async getUpstreamChannelInfoParsed() {
+        const upstreamResponse = await this.getUpstreamChannelInfo();
+
+        return upstreamResponse
             .GetMotoStatusUpstreamChannelInfoResponse
             .MotoConnUpstreamChannel
             .split('|+|')
@@ -136,36 +123,12 @@ export class HnapClient {
                     power: +record[6]
                 };
             });
-
-        return {
-            downstream,
-            upstream
-        };
     }
 
-    async getEventLog() {
-        const payload = {
-            "GetMultipleHNAPs": {
-                "GetMotoStatusLog": "",
-                "GetMotoStatusLogXXX": ""
-            }
-        };
-        const response = await this._performRequest('GetMultipleHNAPs', payload);
-        // console.log({ method: 'getEventLog', response });
+    async getLogParsed() {
+        const logResponse = await this.getLog();
 
-        if (response.GetMultipleHNAPsResponse.GetMultipleHNAPsResult !== 'OK') {
-            console.error(response);
-            throw new Error('Unexpected response.');
-        }
-
-        return response;
-    }
-
-    async getEventLogData() {
-        const eventLogResponse = await this.getEventLog();
-
-        const eventLog = eventLogResponse
-            .GetMultipleHNAPsResponse
+        const log = logResponse
             .GetMotoStatusLogResponse
             .MotoStatusLogList
             .split('}-{')
@@ -178,8 +141,10 @@ export class HnapClient {
                 };
             });
 
-        return eventLog;
+        return log;
     }
+
+    // TODO support arbitrary requests via GetMultipleHNAPs
 
     async _getLoginParams(username) {
         const payload = {
@@ -194,17 +159,25 @@ export class HnapClient {
 
         const response = await this._performRequest('Login', payload);
         // console.log({ method: '_getLoginParams', response });
-
-        if (response.LoginResponse.LoginResult !== 'OK') {
-            console.error(response);
-            throw new Error('Unexpected response.');
-        }
+        this._ensureSuccessResult(response, 'Login')
 
         return {
             cookie: this._encodeUtf8(response.LoginResponse.Cookie),
             publicKey: this._encodeUtf8(response.LoginResponse.PublicKey),
             challenge: this._encodeUtf8(response.LoginResponse.Challenge),
         };
+    }
+
+    async _performSingleHnapRequest(operation) {
+        const payload = {
+            [operation]: ''
+        };
+
+        const response = await this._performRequest(operation, payload);
+        // console.log({ operation, response });
+        this._ensureSuccessResult(response, operation);
+
+        return response;
     }
 
     async _performRequest(operation, payload, skipAuth = false) {
@@ -244,6 +217,13 @@ export class HnapClient {
         // console.log({method: '_performRequest', responseBody});
 
         return responseBody;
+    }
+
+    _ensureSuccessResult(response, operation) {
+        if (response?.[`${operation}Response`]?.[`${operation}Result`] !== 'OK') {
+            console.error(response);
+            throw new Error('Unexpected response.');
+        }
     }
 
     _generateAuth(operation) {

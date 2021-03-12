@@ -10,22 +10,38 @@ const username = 'admin';
 const password = 'motorola';
 await client.login(username, password);
 
-// get modem software status
+// get software
 const software = await client.getSoftware();
 console.log(software);
 
-// get modem connection status
-const connection = await client.getConnection();
-console.log(connection);
+// get startup sequence
+const startupSequence = await client.getStartupSequence();
+console.log(startupSequence);
 
-// get modem connection status as data
-const connectionData = await client.getConnectionData();
-console.log(connectionData);
+// get connection info
+const connectionInfo = await client.getConnectionInfo();
+console.log(connectionInfo);
 
-// get modem event log
-const eventLog = await client.getEventLog();
-console.log(eventLog);
+// get downstream channel info
+const downstreamChannelInfo = await client.getDownstreamChannelInfo();
+console.log(downstreamChannelInfo);
 
-// get modem event log data
-const eventLogData = await client.getEventLogData();
-console.log(eventLogData);
+// get downstream channel info parsed
+const downstreamParsed = await client.getDownstreamChannelInfoParsed();
+console.log(downstreamParsed);
+
+// get upstream channel info
+const upstreamChannelInfo = await client.getUpstreamChannelInfo();
+console.log(upstreamChannelInfo);
+
+// get upstream channel info as data
+const upstreamParsed = await client.getUpstreamChannelInfoParsed();
+console.log(upstreamParsed);
+
+// get log
+const log = await client.getLog();
+console.log(log);
+
+// get log parsed
+const logParsed = await client.getLogParsed();
+console.log(logParsed);
