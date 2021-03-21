@@ -146,6 +146,21 @@ export class HnapClient {
 
     // TODO support arbitrary requests via GetMultipleHNAPs
 
+    async reboot() {
+        const payload = {
+            SetStatusSecuritySettings: {
+                MotoStatusSecurityAction: '1',
+                MotoStatusSecXXX: 'XXX'
+            }
+        };
+        const operation = Object.keys(payload)[0];
+        const response = await this._performRequest(operation, payload);
+        // console.log({ operation, response });
+        this._ensureSuccessResult(response, operation);
+
+        return response;
+    }
+
     async _getLoginParams(username) {
         const payload = {
             Login: {

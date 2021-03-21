@@ -45,3 +45,7 @@ console.log(log);
 // get log parsed
 const logParsed = await client.getLogParsed();
 console.log(logParsed);
+
+// reboot modem
+// const reboot = await client.reboot();
+// console.log(reboot);
